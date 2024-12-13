@@ -169,3 +169,4 @@
 /Users/hariharasudhangunasekaran/IplFantasyLeague/iplbe/iplbe/bin/Debug/net8.0/Newtonsoft.Json.Bson.dll
 /Users/hariharasudhangunasekaran/IplFantasyLeague/iplbe/iplbe/obj/Debug/net8.0/iplbe.RazorAssemblyInfo.cache
 /Users/hariharasudhangunasekaran/IplFantasyLeague/iplbe/iplbe/obj/Debug/net8.0/iplbe.RazorAssemblyInfo.cs
+/Users/hariharasudhangunasekaran/IplFantasyLeague/iplbe/iplbe/bin/Debug/net8.0/BCrypt.Net-Next.dll

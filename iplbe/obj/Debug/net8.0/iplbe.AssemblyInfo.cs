@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("iplbe")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4eae96233f242d21526605940ccbcb1a6a7c5d02")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+34ff14c16448baa9635332dc12fd8f02001c7981")]
 [assembly: System.Reflection.AssemblyProductAttribute("iplbe")]
 [assembly: System.Reflection.AssemblyTitleAttribute("iplbe")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
