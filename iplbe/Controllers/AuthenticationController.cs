@@ -3,14 +3,20 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Azure.Messaging.EventGrid;
+using Microsoft.VisualBasic;
+using Azure.Identity; 
+using Azure; 
 
 namespace FantasyLeagueAPI.Controllers{
     [ApiController]
     [Route("api/authentication")]
     public class AuthenticationController: ControllerBase{
         private readonly IplDbContext iplDbContext; 
+        private readonly EventGridPublisherClient eventGridPublisherClient; 
         public AuthenticationController(IplDbContext iplDbContext){
             this.iplDbContext = iplDbContext; 
+            eventGridPublisherClient = new EventGridPublisherClient(new Uri("https://iplegt.uksouth-1.eventgrid.azure.net/api/events"), new AzureKeyCredential("2kCSuLjSFVmpi7AXfuWKZJLBop7xzca1c1X2rypKXxL78lXoFJ42JQQJ99ALACmepeSXJ3w3AAABAZEGbwSf"));
         }
 
         [HttpPost("signup")]
@@ -29,18 +35,29 @@ namespace FantasyLeagueAPI.Controllers{
             signUp.Password = BCrypt.Net.BCrypt.HashPassword(signUp.Password);
             Guid userId = Guid.NewGuid(); 
             Guid teamId = Guid.NewGuid(); 
+            string verificationToken = Guid.NewGuid().ToString();
             User user = new User(){
                 Id = userId,
                 Email = signUp.Email,
                 PasswordHash = signUp.Password,
                 IsVerified = false,
-                VerificationToken = Guid.NewGuid().ToString(),
+                VerificationToken = verificationToken,
                 ResetToken = Guid.NewGuid().ToString(),
                 ResetTokenExpiry = DateTime.UtcNow.AddHours(1),
                 TeamName = signUp.Teamname
             };
             iplDbContext.Users.Add(user);
             await iplDbContext.SaveChangesAsync();  
+
+            // Create an event
+            var signUpEvent = new EventGridEvent(
+                eventType: "User.SignUp",
+                subject: $"User {signUp.Email} signed up",
+                dataVersion: "1.0",
+                data: new { Email = signUp.Email, Token = verificationToken });
+
+            await eventGridPublisherClient.SendEventAsync(signUpEvent);    
+              
             return Ok(); 
         }
 
@@ -61,13 +78,31 @@ namespace FantasyLeagueAPI.Controllers{
                 Subject = new ClaimsIdentity(new[] 
                 { 
                     new Claim("id", userFromDb.Id.ToString()),
-                    new Claim("name", userFromDb.TeamName.ToString())
+                    new Claim("name", userFromDb.TeamName.ToString()), 
+                    new Claim("isVerified", userFromDb.IsVerified.ToString())
                 }),
                 Expires = DateTime.UtcNow.AddHours(1), 
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(Encoding.ASCII.GetBytes("YourVeryStrongAndSecureSecretKey123456!")), SecurityAlgorithms.HmacSha256Signature)
             }); 
             
             return Ok(new { Token = tokenHandler.WriteToken(token)});
+        }
+
+        [HttpPost("verifyemail")]
+        public async Task<IActionResult> VerifyEmail(VerifyEmail verifiyEmail){
+            User userFromDb = iplDbContext.Users.FirstOrDefault(u => u.Email == verifiyEmail.Email);
+
+            if(userFromDb == null){
+                return BadRequest("Email not registered!");    
+            }
+
+            if(userFromDb.VerificationToken == verifiyEmail.Token){
+                userFromDb.IsVerified = true;
+                await iplDbContext.SaveChangesAsync();
+                return Ok(); 
+            }else{
+                return BadRequest("Email and token does not match");
+            }
         }
     }
 }
